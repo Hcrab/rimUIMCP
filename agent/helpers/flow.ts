@@ -1,5 +1,12 @@
 import type {Game} from '../../packages/sdk/src/index.ts';
 import{readAllPawns}from'./pawns.ts';
+/**
+ * Configures the simulated-time budget in ticks, and wall-clock limits in milliseconds. It
+ * acknowledges already-handled mental states via knownMentalStates, supports custom stop reasons
+ * via stopWhen, and extends observation beyond residents using watchedPawnIds. The runAndWatch
+ * helper attempts to pause upon completion, requiring the caller to control the next resume
+ * explicitly.
+ */
 export type WatchOptions={ticks:number;timeoutMs?:number;speed?:number;pollMs?:number;stopOnNewLetter?:boolean;signal?:AbortSignal;watchedPawnIds?:string[];knownMentalStates?:Record<string,string>;onObservation?:(observation:any)=>void|Promise<void>;stopWhen?:(observation:any)=>string|undefined|Promise<string|undefined>};
 
 function normalizeWatchedPawnIds(value: unknown): string[] {

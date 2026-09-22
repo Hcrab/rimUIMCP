@@ -59,6 +59,13 @@ export class Scripts {
       this.rememberCleanupError(run, 'close-handler', error); this.persistSafely(run);
     }
   }
+  /**
+   * Launches a TypeScript, JavaScript, or Python script under the current user with the inherited
+   * environment, injecting the configuration and script ID. It archives the entry source and its
+   * hash for traceability while executing the original path, meaning external dependencies are not
+   * snapshotted. The wall-clock budget ranges from 1 second to 12 hours (defaulting to 30
+   * minutes), and the run record is returned immediately.
+   */
   run(args: Record<string, any>) {
     const file = path.resolve(this.root, args.path);
     if (!existsSync(file)) throw new Error('Script file not found: ' + file);
@@ -91,6 +98,12 @@ export class Scripts {
     }, budgetMs);
     this.persistSafely(run); return this.describe(run);
   }
+  /**
+   * Retrieves the status of a script run, prioritizing live in-memory execution and falling back
+   * to the persisted record. If the host restarts, any previously running or waiting records are
+   * read as unknown. This allows callers to distinguish historical records from actively managed
+   * processes.
+   */
   status(id: string) {
     const run = this.runs.get(id); if (run) return this.describe(run);
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('Unknown script ID');
@@ -102,6 +115,11 @@ export class Scripts {
     const run = id && this.runs.get(id);
     if (run && ['running', 'waiting-for-agent'].includes(run.status)) { run.status = waiting ? 'waiting-for-agent' : 'running'; this.persist(run); }
   }
+  /**
+   * Cancels active bridge work first, then attempts to terminate the local process even if the
+   * bridge cleanup fails. It saves any cleanup errors and reuses the cancellation promise for
+   * repeat calls. Any game inputs already applied by the script remain in the game.
+   */
   async cancel(id: string, reason = 'cancelled') {
     const run = this.runs.get(id); if (!run) throw new Error('Unknown script ID');
     if (!['running', 'waiting-for-agent'].includes(run.status)) { if (run.cancelPromise) await run.cancelPromise; return this.describe(run); }

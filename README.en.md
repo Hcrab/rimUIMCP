@@ -106,6 +106,8 @@ You can then read `state.roots`, `state.pawns`, or `ui.snapshot`. The exact loca
 
 ## Architecture
 
+For the request lifecycle, component responsibilities, and extension points, see the [Architecture Guide (Chinese)](architecture.md). The [Helper Guide (Chinese)](agent/helpers/README.md) maps common tasks to module entry points and execution behavior.
+
 ```mermaid
 flowchart TD
     AI["AI Agent or<br/>Custom Scripts"] --> MCP["MCP Server<br/>(via stdio)"]

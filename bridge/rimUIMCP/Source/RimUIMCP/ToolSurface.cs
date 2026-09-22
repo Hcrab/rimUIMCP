@@ -22,6 +22,10 @@ public sealed class RpTools
     private static readonly Dictionary<string, Entry> Results = new();
     private static readonly object Sync = new();
 
+    // Reuses the same in-flight or completed Task when a request ID matches its method, arguments,
+    // script ID and sequence token; conflicting reuse returns REQUEST_ID_CONFLICT. When the cache
+    // reaches 256 entries, completed entries become eligible for eviction before a new entry is
+    // added. This process-local cache supports short-term result lookup and deduplication.
     [Tool("rimuimcp/call", Description = "rimUIMCP 1.0: discover methods with session.status; freely inspect state and activate real visible UI. No silent native fallback.")]
     public Task<object> Call(string method, Dictionary<string, object> args = null, string requestId = null, string scriptId = null, string sequenceToken = null, int timeoutMs = 30000)
     {
@@ -43,6 +47,10 @@ public sealed class RpTools
             return task;
         }
     }
+    // Executes state reads and session status checks on the game main thread independently of the
+    // UI lease, while UI and runtime actions take the serialized path. It attaches observation
+    // boundaries to the result and preserves the outcomeMayHaveChanged flag on failures to assist
+    // with read-back decisions.
     private static async Task<object> Execute(string method, JObject args, string id, string scriptId, string sequenceToken, int timeoutMs)
     {
         object started = null, meta = null, result;

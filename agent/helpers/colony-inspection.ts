@@ -11,6 +11,11 @@ const LOW_DURABILITY_RATIO = 0.25;
 // a StatModifier in statBases.
 const DEF_CONDITION_FIELDS = ['defName', 'useHitPoints', 'statBases'];
 
+/**
+ * Retains a historical reference roster for inspection comparisons. Pass the current colony roster
+ * as lease.expectedColonists, an array of {id, name}, to compare observations against the colony
+ * being inspected.
+ */
 export const EXPECTED_COLONISTS = [
   { id: 'Human1252', name: 'Escobar' },
   { id: 'Human1345', name: 'Talia' },
@@ -1524,6 +1529,12 @@ function latestMeta(observations: Array<Record<string, any>>) {
   return observations.length ? observations[observations.length - 1] : null;
 }
 
+/**
+ * Reads colony sections to build an evidence and gap report without acquiring a UI lease. It uses
+ * the lease parameter to supply the expected session, world, and optional roster. It performs
+ * mixed-tick reads, reporting completeness status and tick ranges to describe coverage and
+ * consistency.
+ */
 export async function inspectColony(game: Game, lease: Record<string, unknown>) {
   const context: InspectionContext = { game, lease, observations: [], gaps: [], mapId: undefined, mapWidth: null, mapHeight: null, invalidReason: null };
   const pawnsResult = await section(context, 'pawns', () => readPawns(context));

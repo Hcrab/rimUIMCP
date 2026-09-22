@@ -25,6 +25,11 @@ export async function setPriority(game: Game, pawnId: string, workType: string, 
   });
 }
 
+/**
+ * Applies caller-supplied rows in a single sequence, returning one result per row. It enables
+ * manual priorities and clicks the actual Work cells. Earlier edits remain applied if a later row
+ * fails, requiring the caller to read the Work panel state to reconcile.
+ */
 export async function setPriorities(game: Game, rows: { pawnId: string; workType: string; priority: number }[]) {
   return game.sequence(async () => {
     const results = [];

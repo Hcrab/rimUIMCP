@@ -7,6 +7,12 @@ export { Locator }; export type { Selector };
 
 export type ObjectRef = { id: string; sessionId: string; worldEpoch: number; type: string };
 export type ObservationMeta = { sessionId: string; worldEpoch: number; mapId: string | null; gameTick: number; uiFrame: number; snapshotId: string };
+/**
+ * Carries a successful API response and its data. For game actions, inspect ActionResult evidence
+ * or follow-up state to determine task completion. Local agent.* and scripts.* responses currently
+ * use meta: null at runtime; callers should handle that case despite this type declaring
+ * ObservationMeta.
+ */
 export type Result<T = any> = { success: true; requestId: string; meta: ObservationMeta; data: T; started?: ObservationMeta; ended?: ObservationMeta };
 export type ActionResult = { path: 'ui-control' | 'ui-input' | 'runtime' | 'fixture'; inputProcessed: boolean | null; commandAccepted: boolean | null; completion: 'not-checked' | 'pending' | 'succeeded' | 'failed'; evidence?: unknown; [key: string]: unknown };
 export type Config = { url: string; token: string; scriptId?: string; timeoutMs?: number };
@@ -18,6 +24,12 @@ export class Game {
   config: Config; scriptId: string;
   private sequenceContext = new AsyncLocalStorage<string>();
   constructor(config: Config) { this.config = config; this.scriptId = config.scriptId ?? process.env.RIMUIMCP_SCRIPT_ID ?? randomUUID(); }
+  /**
+   * Sends a single HTTP request carrying the script identity and the current async sequence token,
+   * generating a unique request ID if none is supplied. Structured failures throw RimError; the
+   * caller chooses when to retry after checking the outcome. In case of timeouts, callers should
+   * inspect the game state or query the session result endpoint using the known request ID.
+   */
   async call<T = any>(method: string, args: Record<string, unknown> = {}, options: { timeoutMs?: number; requestId?: string; sequenceToken?: string } = {}): Promise<Result<T>> {
     const timeoutMs = options.timeoutMs ?? this.config.timeoutMs ?? 30000;
     const response = await fetch(this.config.url + '/call', { method: 'POST', headers: { 'content-type': 'application/json', authorization: 'Bearer ' + this.config.token },
@@ -79,6 +91,12 @@ export class Game {
   };
   status() { return this.call('session.status'); }
   cancel(scriptId = this.scriptId) { return this.call('session.cancel', { scriptId }); }
+  /**
+   * Groups a short series of UI operations under a single sequence lease to prevent interleaving
+   * from other scripts. Nested calls automatically reuse the active async-local token, and the
+   * lease is released in a finally block. Callers manage simulation time independently, and any
+   * inputs applied before a callback failure remain in effect.
+   */
   async sequence<T>(fn: (game: Game) => Promise<T>): Promise<T> {
     if (this.sequenceContext.getStore()) return fn(this);
     const result = await this.call<{ token: string }>('session.sequence.begin');
@@ -88,6 +106,13 @@ export class Game {
     });
   }
 }
+/**
+ * Initializes the SDK connection using a Config object or file path, falling back to the
+ * RIMUIMCP_CONFIG environment variable or the repository work/runtime.json. It verifies
+ * connectivity via session status, though callers must separately check gameLoaded and mapLoaded
+ * before performing colony actions. Reconnection is required with a fresh config if the runtime
+ * restarts.
+ */
 export async function connect(config?: Config | string) {
   const resolved = typeof config === 'object' ? config : JSON.parse(readFileSync(config ?? process.env.RIMUIMCP_CONFIG ?? new URL('../../../work/runtime.json', import.meta.url), 'utf8'));
   const game = new Game(resolved); await game.status(); return game;

@@ -3,6 +3,11 @@ import type {Game} from '../../packages/sdk/src/index.ts';
 export type ScheduleAssignment = 'Anything' | 'Work' | 'Joy' | 'Sleep' | 'Meditate';
 const assignments = new Set<ScheduleAssignment>(['Anything', 'Work', 'Joy', 'Sleep', 'Meditate']);
 
+/**
+ * Reads the complete 24-hour schedule for a given pawn ID, returning the hourly assignments and
+ * observation metadata. It throws an error if any hourly assignment is missing. This is useful as
+ * before-and-after evidence when verifying schedule changes.
+ */
 export async function readSchedule(game: Game, pawnId: string) {
   const fields = Array.from({length: 24}, (_, hour) => `timetable.times.${hour}.defName`);
   const observation = await game.state.read('game', {thingId: pawnId, fields, budgetMs: 500});

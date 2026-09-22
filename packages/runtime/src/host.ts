@@ -29,6 +29,12 @@ const server = http.createServer(async (request, response) => {
     call = JSON.parse(Buffer.concat(chunks).toString('utf8'));
     if (!call) throw new Error('Missing request');
     if (!bridge.ready) bridge.config = JSON.parse(readFileSync(bridgePath, 'utf8'));
+    /**
+     * Routes incoming requests, serving local agent and script methods directly with null
+     * metadata. Other methods are dispatched to the game bridge to receive live game observation
+     * metadata. This separation keeps the local process and mailbox lifecycles independent of the
+     * in-game method implementations.
+     */
     if (call.method.startsWith('agent.')) {
       send(200, { success: true, requestId: call.requestId, meta: null, data: agent.invoke(call) });
     } else if (call.method.startsWith('scripts.')) {

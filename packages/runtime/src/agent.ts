@@ -26,6 +26,12 @@ export class AgentMailbox {
     if (record.status === 'pending' && run && !['running', 'waiting-for-agent'].includes(run.status)) { record.status = 'cancelled'; this.save(record); }
     return record;
   }
+  /**
+   * Manages the durable lifecycle of external AI questions and answers. Orchestrators read pending
+   * requests and submit responses, while the SDK ask method polls for completion. Callers should
+   * ask questions outside of a UI sequence so other actors can use the GUI while the answer is
+   * being prepared, using request IDs to support repeat submissions.
+   */
   invoke(call: Request) {
     const args = call.args ?? {};
     switch (call.method) {

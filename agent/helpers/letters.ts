@@ -17,6 +17,11 @@ export function classifyLetters(ids: number[], letters: LetterNotice[]) {
   return { deferred, urgent };
 }
 
+/**
+ * Reads current letters and classifies requested IDs as deferred PositiveEvent letters or urgent
+ * alerts. It uses sameTick:false for running observations. It returns the classification only,
+ * leaving the decision to pause or dismiss letters to the caller.
+ */
 export async function readLetterBatch(game: Game, ids: number[]) {
   const rows = await queryAll(game, {
     root: 'letters', path: 'letters', fields: ['ID', 'label', 'def.defName'],

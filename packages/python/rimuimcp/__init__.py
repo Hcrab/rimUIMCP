@@ -81,6 +81,10 @@ class Game:
         for name in ("state", "ui", "runtime", "events", "scripts", "map", "agent"):
             setattr(self, name, Namespace(self, name))
 
+    # Merges the args mapping and keyword arguments, with keyword arguments taking precedence,
+    # while carrying the ContextVar sequence token. Blocking urllib requests are executed in
+    # asyncio.to_thread, and timeout_ms configures both the request envelope and the HTTP wait. An
+    # explicit request_id supports subsequent result lookups.
     async def call(self, method, args=None, *, timeout_ms=30000, request_id=None, **kwargs):
         request_id = request_id or str(uuid.uuid4())
         body = json.dumps({"method": method, "args": {**(args or {}), **kwargs}, "requestId": request_id,

@@ -1,6 +1,11 @@
 import type { Game, Result, ActionResult, ObjectRef } from './index.ts';
 
 export type Selector = { surface?: string; role?: string; name?: string; actionId?: string; ownerId?: string; ownerRef?: ObjectRef; rowKey?: string; parentTargetId?: string; source?: string; exact?: boolean; nth?: number };
+/**
+ * Stores selector criteria that are resolved on the game side at the moment of invocation. Methods
+ * like filter and nth return new locator instances. To disambiguate repeated UI labels, prefer
+ * using ownerId, rowKey, or actionId, and refresh selectors when the screen layout changes.
+ */
 export class Locator {
   game: Game; selector: Selector;
   constructor(game: Game, selector: Selector) { this.game = game; this.selector = { ...selector }; }

@@ -141,6 +141,10 @@ internal static class RpSession
         return new { scriptId, status };
     }
 
+    // Reserves the UI sequence for a specific script ID using a token. The serialized path checks
+    // for expiry and renews a two-minute deadline when owner requests pass the gate. It is
+    // designed for short multi-step interactions; the caller controls simulation time, and
+    // already-applied inputs remain in effect.
     public static async Task<object> BeginSequence(string scriptId, CancellationToken ct)
     {
         if (string.IsNullOrWhiteSpace(scriptId)) throw new RpException("INVALID_ARGUMENT", "A sequence needs a scriptId/client owner.");

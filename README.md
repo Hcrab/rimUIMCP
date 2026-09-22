@@ -106,6 +106,8 @@ asyncio.run(main())
 
 ## 架构
 
+想了解调用如何执行、各层怎样配合，以及在哪里扩展功能，可以继续阅读 [架构与扩展指南](architecture.md)。按任务查找用法请看 [Helper 使用指南](agent/helpers/README.md)。
+
 ```mermaid
 flowchart TD
     AI["AI 智能体或自定义脚本"] --> MCP["MCP 服务端<br/>标准输入输出（stdio）"]
