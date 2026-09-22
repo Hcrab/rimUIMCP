@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+await game.ui.press('Escape');
+const pawn=(await game.state.pawns({budgetMs:500})).data.items.find((p:any)=>p.id==='Human661');
+await game.pawn(pawn.id).select();if(!pawn.drafted)await game.ui.action('draft').click();
+await game.map.click(134,139,{button:'right'});
+const menu=(await game.ui.snapshot()).data.nodes.find((n:any)=>n.surface.includes('FloatMenu')&&n.role==='button'&&n.name?.startsWith('Go here'));
+if(menu)await game.ui.locator({surface:menu.surface,role:'button',name:menu.name}).click();
+const accepted=(await game.state.pawns({budgetMs:500})).data.items.find((p:any)=>p.id===pawn.id);console.log('Accepted job',accepted.currentJob);
+const arrived=await game.runtime.runUntil({query:{thingId:pawn.id,path:'positionInt'},equals:{x:134,y:0,z:139},maxTicks:1800,timeoutMs:60000});
+assert.equal(arrived.data.satisfied,true);console.log('PASS actual drafted pawn arrived at commanded cell',arrived.data);
+await game.ui.action('draft').click();await game.runtime.save('rimUIMCP-Movement-Verified');

@@ -1,0 +1,16 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+if(process.argv.includes('--load')) await game.runtime.load('rimUIMCP-UI-Fixtures');
+const stove=(await game.state.map()).data.buildings.find((b:any)=>b.def==='FueledStove');
+assert.ok(stove);
+await game.thing(stove.id).select();
+let layout=(await game.ui.snapshot()).data;
+if(!layout.nodes.some((n:any)=>n.name==='Add bill')) await game.ui.locator({surface:'main.inspect',role:'button',name:'Bills'}).click();
+await game.ui.locator({role:'button',name:'Add bill'}).click();
+layout=(await game.ui.snapshot()).data;
+await writeFile('work/recipe-controls.json',JSON.stringify(layout,null,2));
+console.log(JSON.stringify(layout.nodes.filter((n:any)=>n.surface.includes('FloatMenu')).map((n:any)=>({id:n.targetId,role:n.role,name:n.name,disabled:n.disabled})),null,2));
+assert.ok(layout.nodes.some((n:any)=>n.surface.includes('FloatMenu')),'Add bill should open a visible recipe menu');
+await game.ui.screenshot('rp-bill-menu-open.png');

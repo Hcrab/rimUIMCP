@@ -1,0 +1,393 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.IO;
+using System.Linq;
+using RimWorld;
+using RimUIMCP.Core;
+using UnityEngine;
+using Verse;
+
+namespace RimUIMCP;
+
+internal static class RimWorldState
+{
+    internal readonly struct RuntimeStatus
+    {
+        public RuntimeStatus(
+            string programState,
+            bool inEntryScene,
+            bool hasCurrentGame,
+            int mapCount,
+            bool hasCurrentMap,
+            bool longEventPending,
+            bool paused,
+            string timeSpeed,
+            bool screenFading,
+            float fadeOverlayAlpha)
+        {
+            ProgramState = programState;
+            InEntryScene = inEntryScene;
+            HasCurrentGame = hasCurrentGame;
+            MapCount = mapCount;
+            HasCurrentMap = hasCurrentMap;
+            LongEventPending = longEventPending;
+            Paused = paused;
+            TimeSpeed = timeSpeed;
+            ScreenFading = screenFading;
+            FadeOverlayAlpha = fadeOverlayAlpha;
+        }
+
+        public string ProgramState { get; }
+
+        public bool InEntryScene { get; }
+
+        public bool HasCurrentGame { get; }
+
+        public int MapCount { get; }
+
+        public bool HasCurrentMap { get; }
+
+        public bool LongEventPending { get; }
+
+        public bool Paused { get; }
+
+        public string TimeSpeed { get; }
+
+        public bool ScreenFading { get; }
+
+        public float FadeOverlayAlpha { get; }
+
+        public AutomationReadinessEvaluation Readiness =>
+            AutomationReadiness.Evaluate(HasCurrentGame, MapCount, HasCurrentMap, ProgramState, LongEventPending, ScreenFading, FadeOverlayAlpha);
+    }
+
+    public static object ToolStateSnapshot()
+    {
+        return ToolStateSnapshot(ReadStatus());
+    }
+
+    public static RuntimeStatus ReadStatus()
+    {
+        var hasCurrentGame = Current.Game != null;
+        var currentMap = Find.CurrentMap;
+        var mapCount = hasCurrentGame ? Find.Maps?.Count(map => map != null) ?? 0 : 0;
+        var paused = hasCurrentGame && Find.TickManager?.Paused == true;
+        var timeSpeed = hasCurrentGame ? Find.TickManager?.CurTimeSpeed.ToString() : null;
+        var screenFading = ScreenFader.IsFading();
+        var fadeOverlayAlpha = Mathf.Clamp01(ScreenFader.CurrentInstantColor().a);
+
+        return new RuntimeStatus(
+            Current.ProgramState.ToString(),
+            GenScene.InEntryScene,
+            hasCurrentGame,
+            mapCount,
+            currentMap != null,
+            LongEventHandler.AnyEventNowOrWaiting,
+            paused,
+            timeSpeed,
+            screenFading,
+            fadeOverlayAlpha);
+    }
+
+    public static object ToolStateSnapshot(RuntimeStatus status)
+    {
+        var readiness = status.Readiness;
+        var currentMap = Find.CurrentMap;
+
+        return new
+        {
+            programState = status.ProgramState,
+            inEntryScene = status.InEntryScene,
+            hasCurrentGame = status.HasCurrentGame,
+            currentMapId = GetMapId(currentMap),
+            currentMapIndex = currentMap?.Index,
+            mapCount = status.MapCount,
+            longEventPending = status.LongEventPending,
+            paused = status.Paused,
+            timeSpeed = status.TimeSpeed,
+            screenFading = status.ScreenFading,
+            fadeOverlayAlpha = Math.Round(status.FadeOverlayAlpha, 4),
+            gameDataReady = readiness.GameDataReady,
+            mapDataReady = readiness.MapDataReady,
+            currentMapReady = readiness.CurrentMapReady,
+            screenFadeClear = readiness.ScreenFadeClear,
+            playable = readiness.Playable,
+            visualReady = readiness.VisualReady,
+            automationReady = readiness.AutomationReady
+        };
+    }
+
+    public static Map CurrentMapOrThrow()
+    {
+        var map = Find.CurrentMap;
+        if (map == null)
+            throw new InvalidOperationException("No current map is active.");
+
+        return map;
+    }
+
+    public static List<Pawn> CurrentMapColonists(Map map)
+    {
+        return map.mapPawns.FreeColonistsSpawned
+            .OrderBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShort)
+            .ToList();
+    }
+
+    public static List<Pawn> AllPlayerColonists()
+    {
+        if (Current.Game == null)
+            return [];
+
+        return Find.Maps
+            .Where(map => map != null)
+            .SelectMany(map => map.mapPawns.FreeColonistsSpawned)
+            .Distinct()
+            .OrderBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShort)
+            .ToList();
+    }
+
+    public static List<Pawn> AllCurrentMapPawns(Map map)
+    {
+        return map.mapPawns.AllPawnsSpawned
+            .OrderBy(pawn => pawn.Name?.ToStringShort ?? pawn.LabelShort)
+            .ToList();
+    }
+
+    public static Pawn ResolveColonist(string pawnName = null, string pawnId = null)
+    {
+        return ResolvePawn(pawnName, pawnId, AllPlayerColonists(), "player-controlled colonist");
+    }
+
+    public static Pawn ResolveCurrentMapColonist(string pawnName = null, string pawnId = null)
+    {
+        return ResolvePawn(pawnName, pawnId, CurrentMapColonists(CurrentMapOrThrow()), "current-map colonist");
+    }
+
+    public static Pawn ResolveCurrentMapPawn(string pawnName = null, string pawnId = null)
+    {
+        return ResolvePawn(pawnName, pawnId, AllCurrentMapPawns(CurrentMapOrThrow()), "current-map pawn");
+    }
+
+    public static Pawn ResolveSelectedPawn(string pawnName = null, string pawnId = null)
+    {
+        return ResolvePawn(pawnName, pawnId, Find.Selector.SelectedPawns, "selected pawn");
+    }
+
+    public static Thing ResolveCurrentMapThing(string thingId)
+    {
+        if (string.IsNullOrWhiteSpace(thingId))
+            throw new ArgumentException("A current-map thing id is required.", nameof(thingId));
+
+        var normalizedId = thingId.Trim();
+        var matches = CurrentMapOrThrow().listerThings.AllThings
+            .Where(thing => thing != null)
+            .Where(thing => string.Equals(GetThingId(thing), normalizedId, StringComparison.Ordinal))
+            .ToList();
+
+        if (matches.Count == 1)
+            return matches[0];
+        if (matches.Count > 1)
+            throw new InvalidOperationException($"Ambiguous current-map thing id '{thingId}'.");
+
+        throw new InvalidOperationException($"Could not find current-map thing id '{thingId}'.");
+    }
+
+    public static Vector3 CellCenter(IntVec3 cell)
+    {
+        return new Vector3(cell.x + 0.5f, 0f, cell.z + 0.5f);
+    }
+
+    public static IEnumerable<string> ParseNames(string pawnNamesCsv)
+    {
+        if (string.IsNullOrWhiteSpace(pawnNamesCsv))
+            yield break;
+
+        var separators = new[] { ',', ';', '|', '\n' };
+        foreach (var part in pawnNamesCsv.Split(separators, StringSplitOptions.RemoveEmptyEntries))
+        {
+            var trimmed = part.Trim();
+            if (trimmed.Length > 0)
+                yield return trimmed;
+        }
+    }
+
+    public static string GetThingId(Thing thing)
+    {
+        return thing?.GetUniqueLoadID();
+    }
+
+    public static string GetMapId(Map map)
+    {
+        return map?.GetUniqueLoadID();
+    }
+
+    public static string SanitizeName(string name, string fallbackPrefix)
+    {
+        var raw = string.IsNullOrWhiteSpace(name)
+            ? $"{fallbackPrefix}_{DateTime.Now:yyyyMMdd_HHmmss}"
+            : name.Trim();
+
+        var invalid = Path.GetInvalidFileNameChars();
+        var chars = raw.Select(ch => invalid.Contains(ch) ? '_' : ch).ToArray();
+        return new string(chars);
+    }
+
+    public static object DescribePawn(Pawn pawn)
+    {
+        return new
+        {
+            pawnId = GetThingId(pawn),
+            thingIdNumber = pawn.thingIDNumber,
+            className = pawn.GetType().FullName ?? pawn.GetType().Name,
+            defName = pawn.def?.defName,
+            kindDef = pawn.kindDef?.defName,
+            race = pawn.def?.race?.ToString(),
+            name = pawn.Name?.ToStringShort ?? pawn.LabelShort,
+            fullName = pawn.Name?.ToStringFull ?? pawn.LabelCap,
+            label = pawn.LabelCap,
+            selected = Current.ProgramState == ProgramState.Playing && Find.Selector.IsSelected(pawn),
+            drafted = pawn.drafter?.Drafted ?? false,
+            downed = pawn.Downed,
+            dead = pawn.Dead,
+            spawned = pawn.Spawned,
+            map = pawn.Map?.Index.ToString(CultureInfo.InvariantCulture),
+            mapId = GetMapId(pawn.Map),
+            mapIndex = pawn.Map?.Index,
+            position = pawn.Position.IsValid ? new { x = pawn.Position.x, z = pawn.Position.z } : null,
+            job = pawn.CurJob?.def?.defName,
+            mentalState = pawn.MentalStateDef?.defName,
+            faction = pawn.Faction?.Name,
+            factionDef = pawn.Faction?.def?.defName,
+            factionIsPlayer = pawn.Faction?.IsPlayer ?? false,
+            factionHostileToPlayer = pawn.Faction != null && Faction.OfPlayer != null && pawn.Faction.HostileTo(Faction.OfPlayer),
+            humanlike = pawn.RaceProps?.Humanlike ?? false,
+            animal = pawn.RaceProps?.Animal ?? false,
+            mechanoid = pawn.RaceProps?.IsMechanoid ?? false,
+            insect = pawn.RaceProps?.FleshType == FleshTypeDefOf.Insectoid
+        };
+    }
+
+    public static object DescribeThing(Thing thing)
+    {
+        return new
+        {
+            thingId = GetThingId(thing),
+            thingIdNumber = thing?.thingIDNumber,
+            defName = thing?.def?.defName,
+            label = thing?.LabelCap.ToString(),
+            className = thing?.GetType().FullName ?? thing?.GetType().Name,
+            spawned = thing?.Spawned ?? false,
+            mapId = GetMapId(thing?.MapHeld),
+            mapIndex = thing?.MapHeld?.Index,
+            position = thing != null && thing.Position.IsValid ? new { x = thing.Position.x, z = thing.Position.z } : null
+        };
+    }
+
+    public static object DescribeCamera()
+    {
+        var driver = Find.CameraDriver;
+        var currentMap = Find.CurrentMap;
+        var sizeRange = driver.config.sizeRange;
+
+        return new
+        {
+            success = true,
+            map = currentMap?.Index.ToString(CultureInfo.InvariantCulture),
+            mapId = GetMapId(currentMap),
+            mapIndex = currentMap?.Index,
+            rootSize = driver.RootSize,
+            zoomRootSize = driver.ZoomRootSize,
+            zoomRange = driver.CurrentZoom.ToString(),
+            sizeRange = new { min = sizeRange.min, max = sizeRange.max },
+            cameraZoomExtensionEnabled = RimBridgeCameraConfig.CameraZoomExtensionEnabled,
+            mapPosition = new { x = driver.MapPosition.x, z = driver.MapPosition.z },
+            viewRect = new
+            {
+                minX = driver.CurrentViewRect.minX,
+                minZ = driver.CurrentViewRect.minZ,
+                maxX = driver.CurrentViewRect.maxX,
+                maxZ = driver.CurrentViewRect.maxZ,
+                width = driver.CurrentViewRect.Width,
+                height = driver.CurrentViewRect.Height
+            }
+        };
+    }
+
+    public static float ComputeFrameRootSize(IEnumerable<Pawn> pawns)
+    {
+        var list = pawns.Where(pawn => pawn.Spawned).ToList();
+        if (list.Count == 0)
+            return Find.CameraDriver.RootSize;
+
+        var minX = list.Min(pawn => pawn.Position.x);
+        var maxX = list.Max(pawn => pawn.Position.x);
+        var minZ = list.Min(pawn => pawn.Position.z);
+        var maxZ = list.Max(pawn => pawn.Position.z);
+        var span = Mathf.Max(maxX - minX + 1, maxZ - minZ + 1);
+
+        return Mathf.Clamp(span * 0.9f + 12f, 8f, 140f);
+    }
+
+    private static Pawn ResolvePawn(string pawnName, string pawnId, IEnumerable<Pawn> source, string description)
+    {
+        var pawns = source
+            .Where(pawn => pawn != null)
+            .Distinct()
+            .ToList();
+
+        if (string.IsNullOrWhiteSpace(pawnId) == false)
+        {
+            var normalizedId = pawnId.Trim();
+            var idMatches = pawns
+                .Where(pawn => string.Equals(GetThingId(pawn), normalizedId, StringComparison.Ordinal))
+                .ToList();
+            if (idMatches.Count == 1)
+                return idMatches[0];
+            if (idMatches.Count > 1)
+                throw new InvalidOperationException($"Ambiguous {description} id '{pawnId}'.");
+
+            throw new InvalidOperationException($"Could not find {description} id '{pawnId}'.");
+        }
+
+        if (string.IsNullOrWhiteSpace(pawnName))
+            throw new ArgumentException($"A {description} name or id is required.");
+
+        var normalized = pawnName.Trim();
+
+        var exactMatches = pawns.Where(pawn => MatchesPawnName(pawn, normalized, exact: true)).ToList();
+        if (exactMatches.Count == 1)
+            return exactMatches[0];
+        if (exactMatches.Count > 1)
+            throw new InvalidOperationException($"Ambiguous {description} name '{pawnName}'. Matches: {string.Join(", ", exactMatches.Select(NameForDisplay))}");
+
+        var fuzzyMatches = pawns.Where(pawn => MatchesPawnName(pawn, normalized, exact: false)).ToList();
+        if (fuzzyMatches.Count == 1)
+            return fuzzyMatches[0];
+        if (fuzzyMatches.Count > 1)
+            throw new InvalidOperationException($"Ambiguous {description} name '{pawnName}'. Matches: {string.Join(", ", fuzzyMatches.Select(NameForDisplay))}");
+
+        throw new InvalidOperationException($"Could not find {description} '{pawnName}'.");
+    }
+
+    private static bool MatchesPawnName(Pawn pawn, string query, bool exact)
+    {
+        var candidates = new[]
+        {
+            pawn.Name?.ToStringShort,
+            pawn.Name?.ToStringFull,
+            pawn.LabelShort,
+            pawn.LabelCap
+        }
+        .Where(text => string.IsNullOrWhiteSpace(text) == false);
+
+        return exact
+            ? candidates.Any(candidate => string.Equals(candidate, query, StringComparison.OrdinalIgnoreCase))
+            : candidates.Any(candidate => candidate.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+    }
+
+    private static string NameForDisplay(Pawn pawn)
+    {
+        return pawn.Name?.ToStringShort ?? pawn.LabelShort;
+    }
+}

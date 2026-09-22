@@ -1,0 +1,16 @@
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+###############################################################################
+# Exclude files from releases/exports
+###############################################################################
+/.git export-ignore
+/.github export-ignore
+/.vs export-ignore
+/Source export-ignore
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/*.sln export-ignore
+/Directory.Build.props export-ignore

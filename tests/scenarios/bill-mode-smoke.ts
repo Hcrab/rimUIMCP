@@ -1,0 +1,14 @@
+import assert from 'node:assert/strict';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+const owner=(await game.state.bills()).data.items.find((i:any)=>i.bills.some((b:any)=>b.recipe==='CookMealSimple'));
+const bill=owner.bills.find((b:any)=>b.recipe==='CookMealSimple');
+const state=(await game.state.read(bill.reference,{fields:['repeatCount','ingredientSearchRadius','repeatMode']})).data;
+assert.equal(state.fields.repeatCount,12); assert.ok(Math.abs(state.fields.ingredientSearchRadius-25)<1);
+await game.ui.locator({role:'button',name:'Do X times',ownerRef:owner.owner}).click();
+await game.ui.locator({role:'button',name:'Do until you have X'}).click();
+const after=await game.state.read(bill.reference,{fields:['repeatMode.defName','repeatCount','ingredientSearchRadius']});
+assert.equal(after.data.fields['repeatMode.defName'],'TargetCount');
+console.log('PASS bill real UI add/count=12/radius=25/mode=TargetCount',after.data.fields);
+await game.runtime.save('rimUIMCP-UI-Fixtures-Bills');
+await game.ui.screenshot('rp-bill-verified.png');

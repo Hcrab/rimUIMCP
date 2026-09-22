@@ -1,0 +1,10 @@
+import assert from 'node:assert/strict';
+import { connect } from '../../packages/sdk/src/index.ts';
+const game=await connect();
+await game.ui.panel('research').open();
+await game.ui.action('research.project.TreeSowing').activate();
+await game.ui.action('research.start').activate();
+assert.equal((await game.state.research()).data.current,'TreeSowing');
+console.log('PASS research selected and started through real UI');
+console.log((await game.ui.screenshot('rp-research-started')).data.path);
+await game.ui.press('Escape');

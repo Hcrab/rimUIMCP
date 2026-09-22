@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import {writeFile} from 'node:fs/promises';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+if(!process.argv.includes('--resume')) {
+await game.ui.locator({role:'button',name:'Wooden wall'}).click();
+await game.call('ui.reveal',{x:141,z:144});
+await game.map.drag(138,144,142,144);
+await game.ui.press('Escape');
+}
+let result=await game.state.query({root:'currentMap.blueprints',derived:false,where:{'def.defName':'Blueprint_Wall'},fields:['thingIDNumber','positionInt'],budgetMs:500});
+assert.equal(result.data.items.length,5);
+console.log('PASS wall drag blueprints',result.data.items);
+await game.ui.panel('architect').open();
+if(!(await game.ui.snapshot()).data.nodes.some((n:any)=>n.actionId==='build.Door')) await game.ui.action('architect.category.Structure').activate();
+await game.ui.action('build.Door').activate();
+await game.ui.locator({role:'button',name:'Wooden door'}).click();
+await game.map.click(143,144); await game.ui.press('Escape');
+await game.ui.panel('architect').open(); await game.ui.action('architect.category.Furniture').activate();
+await game.ui.action('build.Bed').activate();
+const layout=(await game.ui.snapshot()).data;
+const wood=layout.nodes.find((n:any)=>n.role==='button'&&n.name==='Wooden bed');
+if(wood) await game.ui.locator({role:'button',name:'Wooden bed'}).click();
+await game.ui.press('E'); await game.map.click(144,146); await game.ui.press('Escape');
+result=await game.state.query({root:'currentMap.blueprints',derived:false,fields:['def.defName','positionInt','rotationInt.rotInt'],budgetMs:500});
+const items=result.data.items;
+console.log('Blueprints',items); await writeFile('work/construction-verification.json',JSON.stringify(items,null,2));
+assert.ok(items.some((i:any)=>i['def.defName']==='Blueprint_Door'));
+assert.ok(items.some((i:any)=>i['def.defName']==='Blueprint_Bed'));
+await game.runtime.save('rimUIMCP-Construction-Fixtures');

@@ -1,0 +1,72 @@
+# Attention Policy
+
+RimUIMCP uses blocking attention to surface important async game state that arrives after a normal tool call boundary.
+
+The practical goal is simple: if RimWorld logs a severe failure or a bridge operation fails after a tool already returned, the next ordinary game-bound call should stop and force inspection instead of letting the caller continue on stale assumptions.
+
+## Current Built-In Policy
+
+Today, RimUIMCP opens blocking attention for:
+
+- RimWorld or bridge log entries at `error` or `fatal`
+- bridge operation lifecycle events:
+  - `operation.failed`
+  - `operation.cancelled`
+  - `operation.timed_out`
+
+It does not currently open blocking attention for:
+
+- `info` logs
+- `warning` logs by themselves
+- successful or in-progress operation events
+
+The current implementation lives in `RimUIMCP.Core` and is intentionally centralized so future work has one seam to extend.
+
+## What Tool Authors Need To Do
+
+Most tool authors do not need to write any attention logic.
+
+The normal pattern is:
+
+- write an ordinary tool
+- return normal success or failure data
+- let RimUIMCP's integration layer decide whether later async logs or operation failures should open attention
+
+That keeps the attention protocol out of ordinary tool code.
+
+## Diagnostics While Attention Is Open
+
+When GABS is enforcing attention gating, ordinary game-bound calls are blocked until the current attention item is acknowledged.
+
+Diagnostics still remain available because RimUIMCP publishes diagnostic, status, lifecycle, and read-only tags for these tools:
+
+- `rimbridge/get_operation`
+- `rimbridge/get_bridge_status`
+- `rimbridge/list_operations`
+- `rimbridge/list_operation_events`
+- `rimbridge/list_logs`
+- `rimbridge/wait_for_operation`
+- `rimbridge/wait_for_game_loaded`
+- `rimbridge/wait_for_long_event_idle`
+- `games.get_attention`
+- `games.ack_attention`
+
+This split is intentional:
+
+- attention is the compact control-plane summary
+- diagnostics remain the detailed pull-based inspection path
+
+## Current Limitation For Third-Party Mods
+
+There is not yet a public cross-mod API for another RimWorld mod to publish its own async attention item directly through RimUIMCP.
+
+That means third-party companion tools can already:
+
+- expose tools through `RimUIMCP.Sdk` and `BridgeTools` companion DLLs
+- benefit from the central attention system when severe logs or failed bridge operations occur
+
+But they cannot yet:
+
+- open, update, or clear a first-class attention item on their own
+
+That integration surface should be designed deliberately later. For now, treat third-party attention publication as deferred work rather than part of the current extension contract.

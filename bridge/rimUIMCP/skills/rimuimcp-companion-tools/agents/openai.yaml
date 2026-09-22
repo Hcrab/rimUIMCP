@@ -1,0 +1,7 @@
+interface:
+  display_name: "RimBridge Companion Tools"
+  short_description: "Build RimUIMCP companion DLLs"
+  default_prompt: "Use $rimuimcp-companion-tools when adding or migrating a RimWorld mod to RimUIMCP.Sdk companion DLL tools."
+
+policy:
+  allow_implicit_invocation: true

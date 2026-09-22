@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+await game.ui.panel('architect').open();
+if(!(await game.ui.snapshot()).data.nodes.some((n:any)=>n.actionId==='designator.Designator_ZoneAddStockpile_Resources')) await game.ui.action('architect.category.Zone').activate();
+await game.ui.action('designator.Designator_ZoneAddStockpile_Resources').activate();
+await game.map.drag(145,138,147,140);
+await game.ui.press('Escape'); await game.map.click(146,139);
+const zones=await game.state.read('currentMap',{path:'zoneManager.allZones',depth:0});
+assert.equal(zones.data.total,2);
+console.log('Storage zone created via GUI');

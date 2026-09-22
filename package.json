@@ -1,0 +1,20 @@
+{
+  "name": "rimuimcp",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Open RimWorld state exploration and automation through the real game UI.",
+  "license": "MIT",
+  "author": "JerryLunar (Hcrab)",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Hcrab/rimUIMCP.git"
+  },
+  "scripts": {
+    "build": "tsc --noEmit", "test": "node --test tests/*.test.ts",
+    "host": "node packages/runtime/src/host.ts", "cli": "node apps/cli/src/main.ts",
+    "mcp": "node apps/mcp/src/main.ts", "live": "node tests/live-acceptance.ts"
+  },
+  "dependencies": { "@modelcontextprotocol/sdk": "^1.27.1", "zod": "^3.25.76" },
+  "devDependencies": { "typescript": "^5.9.3", "@types/node": "^24.10.0" }
+}

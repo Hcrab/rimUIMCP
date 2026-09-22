@@ -1,0 +1,95 @@
+using RimUIMCP.Core;
+using Xunit;
+
+namespace RimUIMCP.Core.Tests;
+
+public class DebugActionExecutionPolicyTests
+{
+    [Fact]
+    public void MarksSubmenusAsBrowseOnly()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: true,
+            actionType: "Action",
+            hasAction: true,
+            hasPawnAction: false);
+
+        Assert.Equal(DebugActionExecutionKind.BrowseOnly, assessment.Kind);
+        Assert.False(assessment.Supported);
+        Assert.Contains("submenu", assessment.Reason);
+    }
+
+    [Fact]
+    public void MarksSimpleActionLeavesAsDirect()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: false,
+            actionType: "Action",
+            hasAction: true,
+            hasPawnAction: false);
+
+        Assert.Equal(DebugActionExecutionKind.Direct, assessment.Kind);
+        Assert.True(assessment.Supported);
+        Assert.True(string.IsNullOrEmpty(assessment.Reason));
+    }
+
+    [Fact]
+    public void MarksPawnActionsAsSupportedPawnTargets()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: false,
+            actionType: "Action",
+            hasAction: false,
+            hasPawnAction: true);
+
+        Assert.Equal(DebugActionExecutionKind.PawnTarget, assessment.Kind);
+        Assert.True(assessment.Supported);
+        Assert.Equal("pawn", assessment.RequiredTargetKind);
+        Assert.Contains("pawn target", assessment.Reason);
+    }
+
+    [Fact]
+    public void MarksToolMapForPawnsActionsAsSupportedPawnTargets()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: false,
+            actionType: "ToolMapForPawns",
+            hasAction: false,
+            hasPawnAction: true);
+
+        Assert.Equal(DebugActionExecutionKind.PawnTarget, assessment.Kind);
+        Assert.True(assessment.Supported);
+        Assert.Equal("pawn", assessment.RequiredTargetKind);
+        Assert.Contains("pawn target", assessment.Reason);
+    }
+
+    [Fact]
+    public void MarksToolMapActionsAsSupportedMapTargets()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: false,
+            actionType: "ToolMap",
+            hasAction: true,
+            hasPawnAction: false);
+
+        Assert.Equal(DebugActionExecutionKind.MapTarget, assessment.Kind);
+        Assert.True(assessment.Supported);
+        Assert.Equal("map", assessment.RequiredTargetKind);
+        Assert.Contains("map target", assessment.Reason);
+    }
+
+    [Fact]
+    public void RejectsToolMapLeavesWithoutAnActionDelegate()
+    {
+        var assessment = DebugActionExecutionPolicy.Evaluate(
+            hasChildren: false,
+            actionType: "ToolMap",
+            hasAction: false,
+            hasPawnAction: false);
+
+        Assert.Equal(DebugActionExecutionKind.MapTarget, assessment.Kind);
+        Assert.False(assessment.Supported);
+        Assert.Equal("map", assessment.RequiredTargetKind);
+        Assert.Contains("map action delegate", assessment.Reason);
+    }
+}

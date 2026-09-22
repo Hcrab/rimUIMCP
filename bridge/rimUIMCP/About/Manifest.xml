@@ -1,0 +1,18 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Manifest>
+  <identifier>com.jerrylunar.rimworld.mod.rimuimcp</identifier>
+  <version>1.0.0</version>
+  <targetVersions>
+    <li>1.6.0</li>
+  </targetVersions>
+  <dependencies>
+  </dependencies>
+  <incompatibleWith>
+  </incompatibleWith>
+  <loadBefore>
+  </loadBefore>
+  <loadAfter>
+  </loadAfter>
+  <manifestUri>https://raw.githubusercontent.com/Hcrab/rimUIMCP/latest/bridge/rimUIMCP/About/Manifest.xml</manifestUri>
+  <downloadUri>https://github.com/Hcrab/rimUIMCP/releases/latest</downloadUri>
+</Manifest>

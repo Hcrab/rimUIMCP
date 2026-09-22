@@ -1,0 +1,14 @@
+import { connect } from '../../packages/sdk/src/index.ts';
+import assert from 'node:assert/strict';
+const game=await connect();
+await game.ui.panel('schedule').open();
+await game.ui.action('schedule.assignment.Sleep').activate();
+const cell=game.ui.locator({role:'schedule-cell',ownerId:'Human664',rowKey:'12'});
+await cell.click(); assert.equal((await cell.read()).data.valueText,'Sleep');
+await game.ui.action('schedule.assignment.Anything').activate();
+await cell.click(); assert.equal((await cell.read()).data.valueText,'Anything');
+console.log('PASS schedule hour painting');
+await game.ui.panel('architect').open();
+await game.ui.action('architect.category.Furniture').activate();
+const layout=await game.ui.snapshot();
+console.log(JSON.stringify(layout.data.nodes.filter((n:any)=>n.actionable&&n.actionId?.startsWith('build.')).map((n:any)=>({name:n.name,actionId:n.actionId,role:n.role,source:n.source})),null,2));

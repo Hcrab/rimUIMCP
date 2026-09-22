@@ -1,0 +1,56 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ModMetaData>
+  <name>rimUIMCP</name>
+  <author>JerryLunar (Hcrab); based on RimBridgeServer by Andreas Pardeike</author>
+  <supportedVersions>
+    <li>1.6</li>
+  </supportedVersions>
+  <packageId>jerrylunar.rimuimcp</packageId>
+  <modVersion>1.0.0</modVersion>
+  <url>https://github.com/Hcrab/rimUIMCP</url>
+  <description>Turn a running RimWorld session into a live automation bridge.
+
+rimUIMCP is a community-created bridge for external tools, test harnesses, and AI agents. It exposes broad live state and drives the real RimWorld UI instead of reimplementing gameplay outside the game.
+
+Based on RimBridgeServer 2.1.1 by Andreas Pardeike and distributed under the MIT License with the original attribution retained.
+
+IN PRACTICE YOU CAN
+
+- inspect live game, map, camera, selection, notification, and UI state
+- drive debug actions, main tabs, Architect designators, saves, and screenshots
+- change mod settings and mod load order
+- run JSON or lowered Lua automation scripts
+- drive Dubs Performance Analyzer profiling when DPA is installed and active
+- let third-party mods expose async companion tools through RimUIMCP.Sdk and BridgeTools folders
+
+RECOMMENDED SETUP
+
+Use GABS to start RimWorld, discover the live bridge surface, and connect your automation client without manually managing ports or tokens.
+
+DIRECT MODE
+
+Standalone direct mode still works. Start RimWorld normally, read the bridge startup lines from the RimWorld log, and connect your client directly to the advertised port and token.
+
+INSTALLATION
+
+1. Download the latest release from GitHub
+2. Unzip the rimUIMCP folder into RimWorld's Mods directory
+3. Enable rimUIMCP in RimWorld
+4. Prefer GABS when you want AI or harness-driven control
+
+FEEDBACK
+
+GitHub releases, issues, and docs:
+https://github.com/Hcrab/rimUIMCP
+
+GABS:
+https://github.com/pardeike/GABS
+
+LICENSE
+
+MIT
+
+LUDEON NOTICE
+
+Portions of the materials used to create this content/mod are trademarks and/or copyrighted works of Ludeon Studios Inc. All rights reserved by Ludeon. This content/mod is not official and is not endorsed by Ludeon.</description>
+</ModMetaData>

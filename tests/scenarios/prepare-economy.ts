@@ -1,0 +1,13 @@
+import {writeFile} from 'node:fs/promises';
+import {connect} from '../../packages/sdk/src/index.ts';
+const game=await connect();
+await game.runtime.load('rimUIMCP-UI-Fixtures-Bills');
+await game.call('fixture.prepare',{kind:'soil',x:140,z:140,size:16});
+const trader=await game.call('fixture.prepare',{kind:'trader',x:127,z:130});
+await game.call('fixture.spawn',{def:'Silver',count:1500,x:126,z:130});
+await writeFile('work/trader-fixture.json',JSON.stringify(trader,null,2));
+await game.runtime.save('rimUIMCP-Economy-Fixtures');
+console.log('Prepared isolated soil/trader test fixture; gameplay verification will use UI.',trader.data.id);
+await game.ui.panel('architect').open();
+await game.ui.action('architect.category.Zone').activate();
+console.log((await game.ui.snapshot()).data.nodes.filter((n:any)=>n.actionId&&n.actionable&&n.surface!=='main.buttons').map((n:any)=>({name:n.name,actionId:n.actionId})));

@@ -1,0 +1,59 @@
+using System.Linq;
+using RimUIMCP.LiveSmoke;
+using Xunit;
+
+namespace RimUIMCP.LiveSmoke.Tests;
+
+public class SmokeScenarioCatalogTests
+{
+    [Fact]
+    public void ListsExpectedScenarios()
+    {
+        var scenarios = SmokeScenarioCatalog.List();
+
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.DebugGameLoadScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.DebugGamePauseOnLoadScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ContextMenuCancelRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.DebugActionDiscoveryScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.DebugActionPawnTargetScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ArchitectFloorDropdownScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ArchitectStatefulTargetingScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ArchitectWallPlacementScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ArchitectZoneAreaDragScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ScreenTargetClickRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ScreenTargetClipScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ScriptColonistPrisonScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ScriptWallSequenceScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.SelectionRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.SemanticDiagnosticsRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ModConfigurationRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.TimeSpeedBoostRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.CameraZoomExtensionRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.SaveLoadRoundTripScenarioName);
+        Assert.Contains(scenarios, scenario => scenario.Name == SmokeScenarioCatalog.ScreenshotCaptureScenarioName);
+    }
+
+    [Fact]
+    public void ResolvesKnownScenarioByName()
+    {
+        var scenario = SmokeScenarioCatalog.GetOrThrow(SmokeScenarioCatalog.SelectionRoundTripScenarioName);
+
+        Assert.Equal("selection-roundtrip", scenario.Name);
+        Assert.Contains("selection", scenario.Description, System.StringComparison.OrdinalIgnoreCase);
+        Assert.NotNull(scenario.RunAsync);
+    }
+
+    [Fact]
+    public void ThrowsForUnknownScenario()
+    {
+        var error = Assert.Throws<System.InvalidOperationException>(() => SmokeScenarioCatalog.GetOrThrow("missing"));
+
+        Assert.Contains("Unknown scenario", error.Message);
+    }
+
+    [Fact]
+    public void UsesDebugGameLoadAsDefaultScenario()
+    {
+        Assert.Equal(SmokeScenarioCatalog.DebugGameLoadScenarioName, SmokeScenarioCatalog.DefaultScenarioName);
+    }
+}
