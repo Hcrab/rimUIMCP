@@ -7,48 +7,32 @@
   </supportedVersions>
   <packageId>jerrylunar.rimuimcp</packageId>
   <modVersion>1.0.0</modVersion>
+  <modDependencies>
+    <li>
+      <packageId>brrainz.harmony</packageId>
+      <displayName>Harmony</displayName>
+      <steamWorkshopUrl>steam://url/CommunityFilePage/2009463077</steamWorkshopUrl>
+    </li>
+  </modDependencies>
+  <loadAfter>
+    <li>brrainz.harmony</li>
+  </loadAfter>
   <url>https://github.com/Hcrab/rimUIMCP</url>
-  <description>Turn a running RimWorld session into a live automation bridge.
+  <description>让 AI 通过环世界的原生界面观察殖民地、安排工作和参与战斗。
 
-rimUIMCP is a community-created bridge for external tools, test harnesses, and AI agents. It exposes broad live state and drives the real RimWorld UI instead of reimplementing gameplay outside the game.
+rimUIMCP 为外部 AI 与脚本提供游戏状态读取、真实界面操作、暂停和按 tick 推进等能力。配套工具包含 MCP 入口、TypeScript / Python SDK、命令行和 28 个通用 helper。
 
-Based on RimBridgeServer 2.1.1 by Andreas Pardeike and distributed under the MIT License with the original attribution retained.
+安装：订阅本模组与 Harmony，并在模组列表中启用。Harmony 应在 rimUIMCP 前加载。AI 接入还需配套的本地运行时与客户端，使用方法见项目 README。当前版本面向 Windows / RimWorld 1.6。
 
-IN PRACTICE YOU CAN
+Enable AI agents to observe your colony and play through RimWorld's native user interface.
 
-- inspect live game, map, camera, selection, notification, and UI state
-- drive debug actions, main tabs, Architect designators, saves, and screenshots
-- change mod settings and mod load order
-- run JSON or lowered Lua automation scripts
-- drive Dubs Performance Analyzer profiling when DPA is installed and active
-- let third-party mods expose async companion tools through RimUIMCP.Sdk and BridgeTools folders
+rimUIMCP connects external agents and scripts to live game state, UI interactions, and pause / tick advancement. Companion tools include an MCP entry point, TypeScript and Python SDKs, a CLI, and 28 reusable helpers.
 
-RECOMMENDED SETUP
+Subscribe to this mod and Harmony, then enable both with Harmony loaded first. Connecting an AI also requires the companion local runtime and client; see the project README for setup. This build targets Windows and RimWorld 1.6.
 
-Use GABS to start RimWorld, discover the live bridge surface, and connect your automation client without manually managing ports or tokens.
-
-DIRECT MODE
-
-Standalone direct mode still works. Start RimWorld normally, read the bridge startup lines from the RimWorld log, and connect your client directly to the advertised port and token.
-
-INSTALLATION
-
-1. Download the latest release from GitHub
-2. Unzip the rimUIMCP folder into RimWorld's Mods directory
-3. Enable rimUIMCP in RimWorld
-4. Prefer GABS when you want AI or harness-driven control
-
-FEEDBACK
-
-GitHub releases, issues, and docs:
 https://github.com/Hcrab/rimUIMCP
 
-GABS:
-https://github.com/pardeike/GABS
-
-LICENSE
-
-MIT
+Based on RimBridgeServer 2.1.1 by Andreas Pardeike. Distributed under the MIT License with the original attribution retained.
 
 LUDEON NOTICE
 

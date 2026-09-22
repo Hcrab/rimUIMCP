@@ -13,6 +13,6 @@
   </loadBefore>
   <loadAfter>
   </loadAfter>
-  <manifestUri>https://raw.githubusercontent.com/Hcrab/rimUIMCP/latest/bridge/rimUIMCP/About/Manifest.xml</manifestUri>
-  <downloadUri>https://github.com/Hcrab/rimUIMCP/releases/latest</downloadUri>
+  <manifestUri>https://raw.githubusercontent.com/Hcrab/rimUIMCP/main/bridge/rimUIMCP/About/Manifest.xml</manifestUri>
+  <downloadUri>https://github.com/Hcrab/rimUIMCP</downloadUri>
 </Manifest>
