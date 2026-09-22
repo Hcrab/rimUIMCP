@@ -108,21 +108,21 @@ You can then read `state.roots`, `state.pawns`, or `ui.snapshot`. The exact loca
 
 ```mermaid
 flowchart TD
-    AI[AI agent / your scripts] --> MCP[MCP stdio server]
-    AI --> CLI[CLI]
-    AI --> TS[TypeScript SDK]
-    AI --> PY[Python SDK]
-    AI --> HELP[28 reusable helpers]
+    AI["AI Agent or<br/>Custom Scripts"] --> MCP["MCP Server<br/>(via stdio)"]
+    AI --> CLI["Command Line<br/>Interface (CLI)"]
+    AI --> TS["TypeScript SDK"]
+    AI --> PY["Python SDK"]
+    AI --> HELP["28 Reusable<br/>Helper Modules"]
     HELP --> TS
     MCP --> TS
     CLI --> TS
-    TS --> HOST[Local runtime: HTTP + token]
+    TS --> HOST["Local Runtime<br/>(HTTP & Token Auth)"]
     PY --> HOST
-    HOST --> BRIDGE[rimUIMCP in-game bridge / GABP]
-    BRIDGE --> READ[State exploration]
-    BRIDGE --> UI[Real UI controls and input]
-    BRIDGE --> TIME[Pause, tick advance, save/load]
-    READ --> GAME[RimWorld]
+    HOST --> BRIDGE["rimUIMCP In-Game<br/>Bridge (via GABP)"]
+    BRIDGE --> READ["Game State<br/>Reading"]
+    BRIDGE --> UI["Native Game UI<br/>Interactions"]
+    BRIDGE --> TIME["Pause, Tick Advance,<br/>Save & Load"]
+    READ --> GAME["RimWorld"]
     UI --> GAME
     TIME --> GAME
 ```

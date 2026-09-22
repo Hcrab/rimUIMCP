@@ -108,21 +108,21 @@ asyncio.run(main())
 
 ```mermaid
 flowchart TD
-    AI[AI agent / your scripts] --> MCP[MCP stdio server]
-    AI --> CLI[CLI]
-    AI --> TS[TypeScript SDK]
-    AI --> PY[Python SDK]
-    AI --> HELP[28 reusable helpers]
+    AI["AI 智能体或自定义脚本"] --> MCP["MCP 服务端<br/>标准输入输出（stdio）"]
+    AI --> CLI["命令行工具 (CLI)"]
+    AI --> TS["TypeScript 客户端 SDK"]
+    AI --> PY["Python 客户端 SDK"]
+    AI --> HELP["28 个通用辅助模块<br/>Helper"]
     HELP --> TS
     MCP --> TS
     CLI --> TS
-    TS --> HOST[Local runtime: HTTP + token]
+    TS --> HOST["本地运行时<br/>HTTP 通信与令牌认证"]
     PY --> HOST
-    HOST --> BRIDGE[rimUIMCP in-game bridge / GABP]
-    BRIDGE --> READ[State exploration]
-    BRIDGE --> UI[Real UI controls and input]
-    BRIDGE --> TIME[Pause, tick advance, save/load]
-    READ --> GAME[RimWorld]
+    HOST --> BRIDGE["rimUIMCP 游戏内桥接<br/>GABP 协议"]
+    BRIDGE --> READ["游戏状态读取"]
+    BRIDGE --> UI["原生游戏界面操作"]
+    BRIDGE --> TIME["暂停与按 tick 推进<br/>存档与读档"]
+    READ --> GAME["环世界（RimWorld）"]
     UI --> GAME
     TIME --> GAME
 ```
